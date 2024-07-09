@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_order_form_exp" model="ir.ui.view">
+        <field name="name">renting_view_order_form</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_renting.rental_order_form_view" />
+        <field name="arch" type="xml">
+
+            <xpath
+                expr="//field[@name='order_line']/form//field[@name='product_id']"
+                position="after"
+            >
+                <field
+                    name="days_calculation_type"
+                    invisible="not is_product_rentable"
+                    required="is_product_rentable"
+                />
+                <field
+                    name="start_date"
+                    invisible="not is_product_rentable or days_calculation_type == 'one'"
+                    required="is_product_rentable"
+                />
+                <field
+                    name="return_date"
+                    invisible="not is_product_rentable or days_calculation_type == 'one'"
+                    required="is_product_rentable"
+                />
+                <field
+                    name="number_of_days"
+                    invisible="not is_product_rentable or days_calculation_type == 'one'"
+                    required="is_product_rentable"
+                />
+                <field name="is_product_rentable" invisible="1" />
+            </xpath>
+
+            <xpath
+                expr="//field[@name='order_line']/tree/field[@name='name']"
+                position="after"
+            >
+                <field
+                    name="days_calculation_type"
+                    invisible="not is_product_rentable"
+                    required="is_product_rentable"
+                    optional="hide"
+                />
+                <field
+                    name="is_order_multi"
+                    invisible="1"
+                />
+                <field
+                    name="start_date"
+                    required="is_product_rentable"
+                    invisible="not is_product_rentable"
+                />
+                <field
+                    name="return_date"
+                    required="is_product_rentable"
+                    invisible="not is_product_rentable"
+                />
+                <field
+                    name="number_of_days"
+                    required="is_product_rentable"
+                    invisible="not is_order_multi"
+                    optional="hide"
+                />
+                <field name="is_product_rentable" column_invisible="1" />
+            </xpath>
+
+            <field name="rental_start_date" position="replace" />
+            <field name="rental_return_date" position="replace" />
+
+            <field name="payment_term_id" position="after">
+                <field name="days_calculation_type" widget="radio" options="{'horizontal': True}"/>
+                <field name="rental_return_date" invisible="1"/>
+                <field name="rental_start_date"
+                       string="Rental period"
+                       widget="daterange"
+                       options="{'end_date_field': 'rental_return_date'}"
+                       invisible="not is_rental_order"
+                       />
+            </field>
+        </field>
+    </record>
+</odoo>

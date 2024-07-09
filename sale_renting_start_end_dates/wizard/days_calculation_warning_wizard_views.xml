@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_days_calculation_warning_form" model="ir.ui.view">
+        <field name="name">days.calculation.warning.form</field>
+        <field name="model">days.calculation.warning.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Change Days Calculation Type?">
+                <group>
+                    <field name="days_calculation_type"/>
+                </group>
+                <footer>
+                    <button name="confirm_changes" string="OK" type="object" class="oe_highlight"/>
+                    <button name="cancel_changes" string="Cancel" class="oe_link"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="days_calculation_warning_action" model="ir.actions.act_window">
+        <field name="name">Change Days</field>
+        <field name="res_model">days.calculation.warning.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_days_calculation_warning_form"/>
+        <field name="target">new</field>
+    </record>
+</odoo>
