@@ -73,7 +73,6 @@ class SaleOrder(models.Model):
         extra_context = super()._get_action_add_from_catalog_extra_context()
         if self.days_calculation_type == 'one':
             extra_context.update(start_date=self.rental_start_date, end_date=self.rental_return_date)
-        print('extra_context', extra_context)
         return extra_context
 
     def _update_order_line_info(self, product_id, quantity, **kwargs):
@@ -166,42 +165,23 @@ class SaleOrder(models.Model):
         if 'days_calculation_type' in vals and vals.get('days_calculation_type') == 'multi':
             vals['rental_start_date'] = False
             vals['rental_return_date'] = False
-            print('_prepare_sale_order_write ... vals', vals)
         return vals
 
     @api.model_create_multi
     def create(self, vals_list):
-        print('create ... vals111111', vals_list)
         vals_list = [self._prepare_sale_order_write(vals) for vals in vals_list]
 
-        print('create ... vals222222', vals_list)
         return super(SaleOrder, self).create(vals_list)
 
     def write(self, values):
+        for order in self:
+            if order.days_calculation_type == 'multi' and values.get('rental_return_date'):
+                del values['rental_return_date']
+            if order.days_calculation_type == 'multi' and values.get('rental_start_date'):
+                del values['rental_start_date']
         result = super().write(values)
         values = self._prepare_sale_order_write(values)
-        print('write ... vals', values)
         return result
-
-    # def write(self, vals):
-    #     # Print the initial values being written
-    #     print('Initial write ... vals', vals)
-    #
-    #     # Check if rental_return_date is being set and log it
-    #     if 'rental_return_date' in vals:
-    #         print('rental_return_date being set to:', vals['rental_return_date'])
-    #
-    #     # Prepare the sale order write values
-    #     vals = self._prepare_sale_order_write(vals)
-    #
-    #     # Log the prepared values
-    #     print('Prepared write ... vals', vals)
-    #
-    #     # Call the super method and log the result
-    #     result = super(SaleOrder, self).write(vals)
-    #     print('After super write ... result', result)
-    #
-    #     return result
 
 
 class SaleOrderLine(models.Model):
@@ -228,6 +208,17 @@ class SaleOrderLine(models.Model):
         compute='_compute_number_of_days',
         store=True
     )
+
+    @api.onchange('start_date')
+    def _onchange_start_date(self):
+        if self.days_calculation_type == 'multi':
+            self.order_id._recompute_rental_prices()
+
+    @api.onchange('return_date')
+    def _onchange_return_date(self):
+        if self.days_calculation_type == 'multi':
+            self.order_id._recompute_rental_prices()
+
 
     def action_update_rental_prices_lines(self):
         self.order_id.action_update_rental_prices()

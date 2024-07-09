@@ -4,7 +4,7 @@
     "category": "Sales",
     "summary": "Adds start date and end date on renting sale order lines",
     "depends": [
-        'web',
+        "base",
         "sale_renting",
     ],
     "data": [
