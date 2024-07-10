@@ -52,7 +52,6 @@ class SaleOrder(models.Model):
                 if line.is_rental:
                     line.start_date = fields.Datetime.now().replace(minute=0, second=0) + relativedelta(hours=1)
                     line.return_date = line.start_date + relativedelta(days=1)
-            self.test()
         else:
             self._rental_set_dates()
 
