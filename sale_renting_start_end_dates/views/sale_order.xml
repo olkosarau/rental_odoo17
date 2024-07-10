@@ -66,8 +66,8 @@
                 <field name="is_product_rentable" column_invisible="1" />
             </xpath>
 
-            <field name="rental_start_date" position="replace" />
-            <field name="rental_return_date" position="replace" />
+            <field name="rental_start_date" position="replace" required="is_rental_order"/>
+            <field name="rental_return_date" position="replace" required="is_rental_order"/>
 
             <field name="payment_term_id" position="after">
                 <field name="days_calculation_type" widget="radio" options="{'horizontal': True}"/>
