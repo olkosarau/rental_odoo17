@@ -46,12 +46,13 @@ class SaleOrder(models.Model):
     @api.onchange('days_calculation_type')
     def _onchange_days_calculation_type(self):
         if self.days_calculation_type == 'multi':
-            self.rental_start_date = False
-            self.rental_return_date = False
+            # self.rental_start_date = False
+            # self.rental_return_date = False
             for line in self.order_line:
                 if line.is_rental:
                     line.start_date = fields.Datetime.now().replace(minute=0, second=0) + relativedelta(hours=1)
                     line.return_date = line.start_date + relativedelta(days=1)
+            self.test()
         else:
             self._rental_set_dates()
 
@@ -291,7 +292,6 @@ class SaleOrderLine(models.Model):
          "CHECK(NOT is_rental OR start_date < return_date)",
          "Please choose a return date that is after the pickup date."),
     ]
-
 
     def write(self, values):
         record = super().write(values)
