@@ -292,30 +292,45 @@ class SaleOrderLine(models.Model):
          "Please choose a return date that is after the pickup date."),
     ]
 
-    @api.constrains("product_id", "start_date", "return_date")
-    def _check_start_end_dates(self):
-        for line in self:
-            if line.product_id.rent_ok:
-                if not line.return_date:
-                    raise ValidationError(
-                        _("Missing End Date for sale order line with Product '%s'.")
-                        % (line.product_id.display_name)
-                    )
-                if not line.start_date:
-                    raise ValidationError(
-                        _("Missing Start Date for sale order line with Product '%s'.")
-                        % (line.product_id.display_name)
-                    )
-                if line.start_date > line.return_date:
-                    raise ValidationError(
-                        _("Start date (%(start_date)s) should be before or "
-                          "be the same as end date (%(return_date)s) for "
-                          "sale order line with product '%(product_name)s'.",
-                          start_date=format_date(self.env, line.start_date),
-                          return_date=format_date(self.env, line.return_date),
-                          product_name=line.product_id.display_name,
-                        )
-                    )
+
+    def write(self, values):
+        record = super().write(values)
+        if self.is_rental and self.start_date and self.return_date:
+            if self.start_date > self.return_date:
+                raise ValidationError(
+                    _("Start date (%(start_date)s) should be before or "
+                      "be the same as end date (%(return_date)s) for "
+                      "sale order line with product '%(product_name)s'.",
+                      start_date=format(self.start_date),
+                      return_date=format(self.return_date),
+                      product_name=self.name)
+                )
+        return record
+
+    # @api.constrains("product_id", "start_date", "return_date")
+    # def _check_start_end_dates(self):
+    #     for line in self:
+    #         if line.product_id.rent_ok:
+    #             if not line.return_date:
+    #                 raise ValidationError(
+    #                     _("Missing End Date for sale order line with Product '%s'.")
+    #                     % (line.product_id.display_name)
+    #                 )
+    #             if not line.start_date:
+    #                 raise ValidationError(
+    #                     _("Missing Start Date for sale order line with Product '%s'.")
+    #                     % (line.product_id.display_name)
+    #                 )
+    #             if line.start_date > line.return_date:
+    #                 raise ValidationError(
+    #                     _("Start date (%(start_date)s) should be before or "
+    #                       "be the same as end date (%(return_date)s) for "
+    #                       "sale order line with product '%(product_name)s'.",
+    #                       start_date=format_date(self.env, line.start_date),
+    #                       return_date=format_date(self.env, line.return_date),
+    #                       product_name=line.product_id.display_name,
+    #                     )
+    #                 )
 
     def _get_rental_order_line_description(self):
         tz = self._get_tz()
