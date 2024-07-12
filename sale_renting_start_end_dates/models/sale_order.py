@@ -69,6 +69,18 @@ class SaleOrder(models.Model):
                 **kwargs,
             )
 
+    def action_confirm(self):
+        # Additional logic when days_calculation_type is 'multi'
+        for order in self:
+            if order.days_calculation_type == 'multi':
+                for line in order.order_line.filtered(lambda l: l.is_rental):
+                    if not line.start_date:
+                        raise ValidationError(_("Start date is required for rental lines."))
+                    if not line.return_date:
+                        raise ValidationError(_("Return date is required for rental lines."))
+        super().action_confirm()
+        return True
+
     def _get_action_add_from_catalog_extra_context(self):
         extra_context = super()._get_action_add_from_catalog_extra_context()
         if self.days_calculation_type == 'one':
@@ -183,6 +195,28 @@ class SaleOrder(models.Model):
         values = self._prepare_sale_order_write(values)
         return result
 
+    def copy_data(self, default=None):
+        if default is None:
+            default = {}
+        if 'order_line' not in default:
+            default['order_line'] = [
+                (0, 0, line.copy_data()[0])
+                for line in self.order_line.filtered(lambda l: not l.is_downpayment)
+            ]
+        if self.days_calculation_type == 'one':
+            if 'rental_start_date' not in default:
+                default['rental_start_date'] = self.rental_start_date
+            if 'rental_return_date' not in default:
+                default['rental_return_date'] = self.rental_return_date
+        elif self.days_calculation_type == 'multi':
+            if 'order_line' in default:
+                for idx, line in enumerate(self.order_line.filtered(lambda l: not l.is_downpayment)):
+                    if 'start_date' not in default['order_line'][idx][2]:
+                        default['order_line'][idx][2]['start_date'] = line.start_date
+                    if 'return_date' not in default['order_line'][idx][2]:
+                        default['order_line'][idx][2]['return_date'] = line.return_date
+        return super(SaleOrder, self).copy_data(default)
+
 
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
@@ -294,42 +328,18 @@ class SaleOrderLine(models.Model):
 
     def write(self, values):
         record = super().write(values)
-        if self.is_rental and self.start_date and self.return_date:
-            if self.start_date > self.return_date:
-                raise ValidationError(
-                    _("Start date (%(start_date)s) should be before or "
-                      "be the same as end date (%(return_date)s) for "
-                      "sale order line with product '%(product_name)s'.",
-                      start_date=format(self.start_date),
-                      return_date=format(self.return_date),
-                      product_name=self.name)
-                )
+        for line in self:
+            if line.is_rental and line.start_date and line.return_date:
+                if line.start_date > line.return_date:
+                    raise ValidationError(
+                        _("Start date (%(start_date)s) should be before or "
+                          "be the same as end date (%(return_date)s) for "
+                          "sale order line with product '%(product_name)s'.",
+                          start_date=format(line.start_date),
+                          return_date=format(line.return_date),
+                          product_name=line.name)
+                    )
         return record
-
-    # @api.constrains("product_id", "start_date", "return_date")
-    # def _check_start_end_dates(self):
-    #     for line in self:
-    #         if line.product_id.rent_ok:
-    #             if not line.return_date:
-    #                 raise ValidationError(
-    #                     _("Missing End Date for sale order line with Product '%s'.")
-    #                     % (line.product_id.display_name)
-    #                 )
-    #             if not line.start_date:
-    #                 raise ValidationError(
-    #                     _("Missing Start Date for sale order line with Product '%s'.")
-    #                     % (line.product_id.display_name)
-    #                 )
-    #             if line.start_date > line.return_date:
-    #                 raise ValidationError(
-    #                     _("Start date (%(start_date)s) should be before or "
-    #                       "be the same as end date (%(return_date)s) for "
-    #                       "sale order line with product '%(product_name)s'.",
-    #                       start_date=format_date(self.env, line.start_date),
-    #                       return_date=format_date(self.env, line.return_date),
-    #                       product_name=line.product_id.display_name,
-    #                     )
-    #                 )
 
     def _get_rental_order_line_description(self):
         tz = self._get_tz()
@@ -363,4 +373,12 @@ class SaleOrderLine(models.Model):
                     'date_deadline': self.order_id.rental_start_date,
                 })
             return values
+        else:
+            for line in self:
+                if line.is_rental and line.env.user.has_group('sale_stock_renting.group_rental_stock_picking'):
+                    values.update({
+                        'date_planned': line.start_date,
+                        'date_deadline': line.start_date,
+                    })
+                return values
 

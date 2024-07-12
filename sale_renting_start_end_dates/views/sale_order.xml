@@ -69,6 +69,45 @@
             <field name="rental_start_date" position="replace" required="is_rental_order"/>
             <field name="rental_return_date" position="replace" required="is_rental_order"/>
 
+            <xpath expr="//label[@for='duration_days']" position="attributes">
+                <attribute name="invisible">not is_rental_order or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//div[@class='o_row']" position="attributes">
+                <attribute name="invisible">not is_rental_order or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='duration_days']" position="attributes">
+                <attribute name="invisible">duration_days == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='remaining_hours']" position="attributes">
+                <attribute name="invisible">remaining_hours == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' day ']" position="attributes">
+                <attribute name="invisible">duration_days != 1 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' days ']" position="attributes">
+                <attribute name="invisible">duration_days in [0,1] or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()='and ']" position="attributes">
+                <attribute name="invisible">duration_days == 0 or remaining_hours == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' hour ']" position="attributes">
+                <attribute name="invisible">remaining_hours != 1 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' hours ']" position="attributes">
+                <attribute name="invisible">remaining_hours in [0,1] or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//button[@name='action_update_rental_prices']" position="attributes">
+                <attribute name="invisible">not show_update_duration or state in ['done', 'cancel'] or days_calculation_type == 'multi'</attribute>
+            </xpath>
             <field name="payment_term_id" position="after">
                 <field name="days_calculation_type" widget="radio" options="{'horizontal': True}"/>
                 <field name="rental_return_date" invisible="1"/>
@@ -76,8 +115,8 @@
                        string="Rental period"
                        widget="daterange"
                        options="{'end_date_field': 'rental_return_date'}"
-                       invisible="not is_rental_order"
-                       />
+                       invisible="not is_rental_order or days_calculation_type == 'multi'"
+                />
             </field>
         </field>
     </record>
