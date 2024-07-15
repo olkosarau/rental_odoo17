@@ -6,6 +6,7 @@
     "depends": [
         "base",
         "sale_renting",
+        "sale_stock_renting",
     ],
     "data": [
         'security/ir.model.access.csv',

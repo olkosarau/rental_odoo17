@@ -5,6 +5,8 @@ from odoo.tools.misc import format_date
 from math import ceil
 from pytz import timezone, UTC
 from odoo.tools import format_datetime, format_time
+from odoo.tools.misc import groupby as tools_groupby
+
 
 
 class SaleOrder(models.Model):
@@ -381,4 +383,18 @@ class SaleOrderLine(models.Model):
                         'date_deadline': line.start_date,
                     })
                 return values
+
+    def _partition_so_lines_by_rental_period(self):
+        """ Return a partition of sale.order.line based on (from_date, to_date, warehouse_id)
+        """
+        now = fields.Datetime.now()
+        lines_grouping_key = {
+            line.id: (line.reservation_begin, line.return_date, line.order_id.warehouse_id.id)
+            for line in self
+        }
+        if self.reservation_begin and self.return_date:
+            keyfunc = lambda line_id: (max(lines_grouping_key[line_id][0], now), lines_grouping_key[line_id][1], lines_grouping_key[line_id][2])
+        else:
+            keyfunc = lambda line_id: (now,now, lines_grouping_key[line_id][2])
+        return tools_groupby(self._ids, key=keyfunc)
 
