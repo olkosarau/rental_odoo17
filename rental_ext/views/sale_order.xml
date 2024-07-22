@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_order_form_inherit_ext" model="ir.ui.view">
+        <field name="name">renting.view.order.form.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale_renting.rental_order_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
+                <field name="is_order_multi" column_invisible="1"/>
+
+                <field name="start_date" required="is_product_rentable and is_order_multi"
+                      column_invisible="not parent.is_rental_order or not parent.days_calculation_type == 'multi'"/>
+                <field name="return_date" required="is_product_rentable and is_order_multi"
+                       column_invisible="not parent.is_rental_order or not parent.days_calculation_type == 'multi'"/>
+                <field name="number_of_days" invisible="not is_product_rentable" readonly="1"
+                       column_invisible="not parent.is_rental_order or not parent.days_calculation_type == 'multi'"
+                    optional="hide"/>
+<!--                <field name="is_product_rentable" column_invisible="1" />-->
+
+            </xpath>
+            <xpath expr="//field[@name='rental_start_date']" position="attributes">
+                <attribute name="invisible">not is_rental_order or days_calculation_type == 'multi'</attribute>
+            </xpath>
+             <xpath expr="//label[@for='duration_days']" position="attributes">
+                <attribute name="invisible">not is_rental_order or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//div[@class='o_row']" position="attributes">
+                <attribute name="invisible">(not is_rental_order and not rental_start_date) or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='duration_days']" position="attributes">
+                <attribute name="invisible">duration_days == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='remaining_hours']" position="attributes">
+                <attribute name="invisible">remaining_hours == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//span[text()=' day ']" position="attributes">
+                <attribute name="invisible">duration_days != 1 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//span[text()=' days ']" position="attributes">
+                <attribute name="invisible">duration_days in [0,1] or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <xpath expr="//span[text()='and ']" position="attributes">
+                <attribute name="invisible">duration_days == 0 or remaining_hours == 0 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' hour ']" position="attributes">
+                <attribute name="invisible">remaining_hours != 1 or days_calculation_type == 'multi'</attribute>
+            </xpath>
+
+            <xpath expr="//span[text()=' hours ']" position="attributes">
+                <attribute name="invisible">remaining_hours in [0,1] or days_calculation_type == 'multi'</attribute>
+            </xpath>
+            <field name="payment_term_id" position="after">
+                <field name="check_time_update" invisible="1"/>
+                <field name="days_calculation_type" widget="radio" options="{'horizontal': True}" invisible="not is_rental_order"/>
+            </field>
+        </field>
+    </record>
+
+<!--    <record id="view_order_form_inherit_ext_additional" model="ir.ui.view">-->
+<!--        <field name="name">renting.view.order.form.inherit</field>-->
+<!--        <field name="model">sale.order</field>-->
+<!--        <field name="inherit_id" ref="rental_ext.view_order_form_inherit_ext"/>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <xpath expr="//header" position="inside">-->
+<!--                <field name="is_rental_order" invisible="1"/>-->
+<!--                <field name="days_calculation_type" invisible="1"/>-->
+<!--            </xpath>-->
+<!--             <xpath expr="//field[@name='order_line']/tree/field[@name='start_date_custom']" position="attributes">-->
+<!--                   <field name="days_calculation_type" invisible="1"/>-->
+<!--                <attribute name="column_invisible">not order_line.is_rental_order or order_line.days_calculation_type == 'multi'</attribute>-->
+<!--             </xpath>-->
+<!--        </field>-->
+<!--    </record>-->
+</odoo>
