@@ -80,11 +80,11 @@ class SaleOrderLine(models.Model):
                         format_datetime(self.env, line.start_date),
                         format_datetime(self.env, line.return_date)
                     )
-            elif line.is_rental and line.start_date and line.return_date:
-                    name += '\n{} to {}'.format(
-                        format_datetime(self.env, line.start_date),
-                        format_datetime(self.env, line.return_date)
-                    )
+            elif line.is_rental and line.order_id:
+                name += '\n{} to {}'.format(
+                    format_datetime(self.env, line.order_id.rental_start_date or fields.Datetime.now()),
+                    format_datetime(self.env, line.order_id.rental_return_date)
+                )
             line.name = name
 
     _sql_constraints = [
